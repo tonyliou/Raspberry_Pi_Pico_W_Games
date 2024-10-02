@@ -1,4 +1,3 @@
-# game1.py
 import time
 import rp2
 import random
