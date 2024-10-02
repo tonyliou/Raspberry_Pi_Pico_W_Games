@@ -1,3 +1,4 @@
+import sys
 import time
 from machine import I2C, Pin, mem32
 import libraries.sh1107 as sh1107
@@ -175,8 +176,12 @@ def main():
                     print(f"Running {selected_game_name}")
                     oled.display_text(f"Running {selected_game_name}")
                     
-                    # 動態導入模組
-                    module = __import__(selected_game_name)
+                    # 檢查模組是否已被導入過
+                    if selected_game_name in sys.modules:
+                        module = sys.modules[selected_game_name]
+                    else:
+                        # 動態導入模組
+                        module = __import__(selected_game_name)
                     
                     # 呼叫模組的 main 函數
                     if hasattr(module, 'main'):
