@@ -99,7 +99,7 @@ class Game:
         
         # 定時器
         self.update_timer = TimeToDo.TimeToDo(0)  # 遊戲邏輯更新，立即執行
-        self.draw_timer = TimeToDo.TimeToDo(17)  # 畫面更新頻率，大約60FPS
+        self.draw_timer = TimeToDo.TimeToDo(67)  # 畫面更新頻率，大約15FPS
         self.bullet_timer = TimeToDo.TimeToDo(300)  # 主角射擊頻率
         self.enemy_spawn_timer = TimeToDo.TimeToDo(1500)  # 敵人生成頻率
         self.enemy_bullet_timer = TimeToDo.TimeToDo(700)  # 敵人射擊頻率
