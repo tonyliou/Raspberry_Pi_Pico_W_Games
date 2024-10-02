@@ -561,14 +561,19 @@ class Game:
             self.enemy_spawn_timer.interval = max(800, 1500 - (self.level - 1) * 100)
             self.enemy_bullet_timer.interval = max(500, 700 - (self.level - 1) * 50)
     
-    # 校正按鈕
-    def CalButton(self):
-        button = rp2.bootsel_button()
-        if button:
-            while rp2.bootsel_button():
-                time_module.sleep(0.01)
-            time_module.sleep(0.5)
-            self.init_game()
+    def check_button(self):
+        """
+        Check if a long button press has occurred to exit the game.
+        """
+        if rp2.bootsel_button():  # Check if the BOOTSEL button is pressed
+            press_start = time.time()
+            while rp2.bootsel_button():  # Wait for the button to be released
+                time.sleep(0.01)
+            press_duration = time.time() - press_start
+            if press_duration > 1.0:  # Long press threshold
+                self.oled.display_text("Exiting Game...")
+                return True
+        return False
     
     # 更新遊戲邏輯
     def update_game(self):
@@ -597,7 +602,11 @@ class Game:
                 self.enemy_bullet_timer.Do(self.enemy_shoot)
                 self.item_spawn_timer.Do(self.spawn_item)
                 self.draw_timer.Do(self.draw_game)
-                self.CalButton()
+                
+                if self.check_button():
+                    print("Detected a long press, preparing to return to main menu.")
+                    self.is_running = False
+                    break
     
                 if self.game_over:
                     self.draw_game_over()
