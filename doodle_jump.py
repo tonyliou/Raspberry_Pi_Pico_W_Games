@@ -105,9 +105,24 @@ class Game:
             Platform(43, 77, self.SCREEN_WIDTH, self.SCREEN_HEIGHT),
             Platform(96, 102, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         ]
-        self.update_timer = TimeToDo.TimeToDo(25)  # 遊戲更新頻率 40 FPS
-        self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(100)  # 傾斜讀取頻率 10 Hz
+        self.update_timer = TimeToDo.TimeToDo(63)  # 遊戲更新頻率 40 FPS
+        self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(10)  # 傾斜讀取頻率 10 Hz
+        self.is_running = True
         self.game_over = False
+
+    def check_button(self):
+        """
+        Check if a long button press has occurred to exit the game.
+        """
+        if rp2.bootsel_button():  # Check if the BOOTSEL button is pressed
+            press_start = time.time()
+            while rp2.bootsel_button():  # Wait for the button to be released
+                time.sleep(0.01)
+            press_duration = time.time() - press_start
+            if press_duration > 1.0:  # Long press threshold
+                self.oled.display_text("Exiting Game...")
+                return True
+        return False
 
     def init_game(self):
         """初始化遊戲變數"""
@@ -128,17 +143,29 @@ class Game:
     def run(self):
         """主遊戲迴圈"""
         self.init_game()
-        while True:
-            if self.update_timer.Do(self.update_game):
-                pass  # 遊戲狀態已在 update_game 更新
+        print("Game is running...")
+        self.is_running = True
+        try:
+            while self.is_running:
+                if self.update_timer.Do(self.update_game):
+                    pass  # 遊戲狀態已在 update_game 更新
 
-            if self.OnTiltAnglesTimeTo.Do(self.update_control):
-                pass  # 控制已在 update_control 更新
+                if self.OnTiltAnglesTimeTo.Do(self.update_control):
+                    pass  # 控制已在 update_control 更新
 
-            if self.game_over:
-                self.draw_game_over()
-                time.sleep(2)
-                self.init_game()
+                if self.check_button():
+                    print("Detected a long press, preparing to return to main menu.")
+                    self.is_running = False
+                    break
+
+                if self.game_over:
+                    self.draw_game_over()
+                    time.sleep(2)
+                    self.init_game()
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.is_running = False
 
     def update_control(self):
         """根據 MPU6050 傾斜更新 Doodler 的水平移動"""
