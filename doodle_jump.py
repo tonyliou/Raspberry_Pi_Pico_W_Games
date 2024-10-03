@@ -13,7 +13,7 @@ class OLED:
         self.display = display
 
     def display_text(self, text, x=0, y=0, size=1):
-        self.display.text(text[:16], x, y, 1)  # 顯示文字
+        self.display.text(text[:16], int(x), int(y), 1)  # 顯示文字，確保 x 和 y 是整數
         self.display.show()  # 更新顯示內容
 
     def clear(self):
@@ -24,6 +24,8 @@ class OLED:
 # ==================== Doodler 遊戲類 ====================
 
 class Doodler:
+    MAX_DY = 10  # 最大下墜速度
+
     def __init__(self, screen_width, screen_height):
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -31,28 +33,36 @@ class Doodler:
         self.y = screen_height - 20  # 初始位置
         self.w = 13  # 寬度
         self.h = 13  # 高度
-        self.dy = 0
-        self.dx = 0
+        self.dy = 0.0
+        self.dx = 0.0
         self.score = 0
+        self.prev_y = self.y  # 記錄上一幀的 y 位置
 
     def show(self, oled):
-        oled.display.fill_rect(self.x - self.w//2, self.y - self.h//2, self.w, self.h, 1)
+        oled.display.fill_rect(int(self.x - self.w//2), int(self.y - self.h//2), self.w, self.h, 1)
 
     def lands(self, platform):
         if self.dy > 0:
-            if (self.x + self.w // 2 >= platform.x - platform.w // 2 and
-                self.x - self.w // 2 <= platform.x + platform.w // 2):
-                if (self.y + self.h // 2 >= platform.y - platform.h // 2 and
-                    self.y + self.h // 2 <= platform.y + platform.h // 2):
+            # 檢查從 prev_y 到 current y 是否穿越平台的 y 範圍
+            if (self.prev_y + self.h // 2 <= platform.y - platform.h // 2 and
+                self.y + self.h // 2 >= platform.y - platform.h // 2):
+                
+                # 檢查 x 是否在平台範圍內
+                if (self.x + self.w // 2 >= platform.x - platform.w // 2 and
+                    self.x - self.w // 2 <= platform.x + platform.w // 2):
                     return True
         return False
 
     def jump(self):
-        self.dy = -10  # 提高跳躍速度
+        self.dy = -8.0  # 降低跳躍速度
 
     def move(self):
+        self.prev_y = self.y
+
         # 重力
-        self.dy += 1  # 可以調整為更小的值，如 0
+        self.dy += 0.5  # 減少重力增量
+        if self.dy > self.MAX_DY:
+            self.dy = self.MAX_DY
 
         # 移動
         self.y += self.dy
@@ -76,7 +86,7 @@ class Platform:
         self.h = 4   # 高度
 
     def show(self, oled):
-        oled.display.fill_rect(self.x - self.w//2, self.y - self.h//2, self.w, self.h, 1)
+        oled.display.fill_rect(int(self.x - self.w//2), int(self.y - self.h//2), self.w, self.h, 1)
 
 # ==================== Game 類 ====================
 
@@ -95,7 +105,7 @@ class Game:
             Platform(43, 77, self.SCREEN_WIDTH, self.SCREEN_HEIGHT),
             Platform(96, 102, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         ]
-        self.update_timer = TimeToDo.TimeToDo(50)  # 遊戲更新頻率 20 FPS
+        self.update_timer = TimeToDo.TimeToDo(25)  # 遊戲更新頻率 40 FPS
         self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(100)  # 傾斜讀取頻率 10 Hz
         self.game_over = False
 
@@ -136,36 +146,39 @@ class Game:
         roll, pitch, _ = self.mpu.get_angles()
         # 根據 roll 角度來控制左右移動
         if roll > 10:
-            self.doodler.dx = 2  # 向右移動
+            self.doodler.dx = 2.0  # 向右移動
         elif roll < -10:
-            self.doodler.dx = -2  # 向左移動
+            self.doodler.dx = -2.0  # 向左移動
         else:
-            self.doodler.dx = 0  # 不移動
+            self.doodler.dx = 0.0  # 不移動
 
     def update_game(self):
         """更新遊戲狀態"""
         if not self.game_over:
             # 檢查是否落在平台上
+            landed = False
             for platform in self.platforms:
                 if self.doodler.lands(platform):
                     self.doodler.jump()
+                    landed = True
                     break
 
-            # 移動 Doodler
-            self.doodler.move()
+            if not landed:
+                # 移動 Doodler
+                self.doodler.move()
 
-            # 當 Doodler 移動到畫面上半部時，移動平台
-            if self.doodler.y < self.SCREEN_HEIGHT // 2 and self.doodler.dy < 0:
-                for platform in self.platforms:
-                    platform.y -= self.doodler.dy
-                    if platform.y > self.SCREEN_HEIGHT:
-                        platform.x = random.randint(10, self.SCREEN_WIDTH - 10)
-                        platform.y = random.randint(-20, 0)
-                        self.doodler.score += 1
+                # 當 Doodler 移動到畫面上半部時，移動平台
+                if self.doodler.y < self.SCREEN_HEIGHT // 2 and self.doodler.dy < 0:
+                    for platform in self.platforms:
+                        platform.y -= self.doodler.dy
+                        if platform.y > self.SCREEN_HEIGHT:
+                            platform.x = random.randint(10, self.SCREEN_WIDTH - 10)
+                            platform.y = random.randint(-20, 0)
+                            self.doodler.score += 1
 
-            # 檢查遊戲結束
-            if self.doodler.y - self.doodler.h // 2 > self.SCREEN_HEIGHT:
-                self.game_over = True
+                # 檢查遊戲結束
+                if self.doodler.y - self.doodler.h // 2 > self.SCREEN_HEIGHT:
+                    self.game_over = True
 
             # 繪製遊戲畫面
             self.draw_game()
@@ -180,7 +193,7 @@ class Game:
         self.doodler.show(self.oled)
         # 繪製分數
         score_text = f"Score: {self.doodler.score}"
-        self.oled.display.text(score_text, 0, 0, 1)
+        self.oled.display.text(score_text, int(0), int(0), 1)
         self.oled.display.show()
 
     def draw_game_over(self):
