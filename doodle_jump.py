@@ -13,7 +13,6 @@ class OLED:
         self.display = display
 
     def display_text(self, text, x=0, y=0, size=1):
-        self.display.fill(0)  # 清空顯示內容
         self.display.text(text[:16], x, y, 1)  # 顯示文字
         self.display.show()  # 更新顯示內容
 
@@ -29,9 +28,9 @@ class Doodler:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.x = screen_width // 2
-        self.y = screen_height - 20  # 原本 HEIGHT - 70 * 0.2 ≈ 130 → 調整至 108
-        self.w = 13  # 原本 40 * 0.32 ≈ 13
-        self.h = 13  # 調整為正方形以適應 OLED
+        self.y = screen_height - 20  # 初始位置
+        self.w = 13  # 寬度
+        self.h = 13  # 高度
         self.dy = 0
         self.dx = 0
         self.score = 0
@@ -41,19 +40,19 @@ class Doodler:
 
     def lands(self, platform):
         if self.dy > 0:
-            if (self.x + self.w / 2 >= platform.x - platform.w / 2 and
-                self.x - self.w / 2 <= platform.x + platform.w / 2):
-                if (self.y + self.h / 2 >= platform.y - platform.h / 2 and
-                    self.y + self.h / 2 <= platform.y + platform.h / 2):
+            if (self.x + self.w // 2 >= platform.x - platform.w // 2 and
+                self.x - self.w // 2 <= platform.x + platform.w // 2):
+                if (self.y + self.h // 2 >= platform.y - platform.h // 2 and
+                    self.y + self.h // 2 <= platform.y + platform.h // 2):
                     return True
         return False
 
     def jump(self):
-        self.dy = -4  # 跳躍速度
+        self.dy = -10  # 提高跳躍速度
 
     def move(self):
         # 重力
-        self.dy += 0.2
+        self.dy += 1  # 可以調整為更小的值，如 0
 
         # 移動
         self.y += self.dy
@@ -73,8 +72,8 @@ class Platform:
         self.screen_height = screen_height
         self.x = x
         self.y = y
-        self.w = 32  # 原本 100 * 0.32 ≈ 32
-        self.h = 4   # 原本 20 * 0.20 ≈ 4
+        self.w = 32  # 寬度
+        self.h = 4   # 高度
 
     def show(self, oled):
         oled.display.fill_rect(self.x - self.w//2, self.y - self.h//2, self.w, self.h, 1)
@@ -137,9 +136,9 @@ class Game:
         roll, pitch, _ = self.mpu.get_angles()
         # 根據 roll 角度來控制左右移動
         if roll > 10:
-            self.doodler.dx = 1.6  # 向右移動
+            self.doodler.dx = 2  # 向右移動
         elif roll < -10:
-            self.doodler.dx = -1.6  # 向左移動
+            self.doodler.dx = -2  # 向左移動
         else:
             self.doodler.dx = 0  # 不移動
 
@@ -174,11 +173,11 @@ class Game:
     def draw_game(self):
         """在 OLED 上繪製遊戲畫面"""
         self.oled.display.fill(0)  # 清空顯示
-        # 繪製 Doodler
-        self.doodler.show(self.oled)
         # 繪製平台
         for platform in self.platforms:
             platform.show(self.oled)
+        # 繪製 Doodler
+        self.doodler.show(self.oled)
         # 繪製分數
         score_text = f"Score: {self.doodler.score}"
         self.oled.display.text(score_text, 0, 0, 1)
@@ -217,7 +216,7 @@ def main():
 
     # 初始化 I2C 和 OLED 顯示
     i2c1 = I2C(1, scl=Pin(7), sda=Pin(6), freq=400000)
-    display = sh1107.SH1107_I2C(128, 128, i2c1, reset=None, addr=0x3c)
+    display = sh1107.SH1107_I2C(128, 128, i2c1, addr=0x3c)  # 移除 reset=None
     oled = OLED(display)
 
     # 初始化 MPU6050
