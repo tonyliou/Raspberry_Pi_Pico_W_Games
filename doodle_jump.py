@@ -37,6 +37,7 @@ class Doodler:
         self.dx = 0.0
         self.score = 0
         self.prev_y = self.y  # 記錄上一幀的 y 位置
+        self.is_flipped = False  # 是否水平反轉顯示
     
         self.bitmap = [
                 "0000000111100",
@@ -55,13 +56,10 @@ class Doodler:
             ]
 
     def show(self, oled):
-        # 根據 dx 來決定是否反轉顯示
-        is_flipped = self.dx > 0
-
         for row_idx, row in enumerate(self.bitmap):
             for col_idx in range(len(row)):
                 # 根據是否反轉，選擇正序或反序顯示
-                if is_flipped:
+                if self.is_flipped:
                     pixel = row[-(col_idx + 1)]  # 反轉顯示
                 else:
                     pixel = row[col_idx]
@@ -101,6 +99,12 @@ class Doodler:
             self.x = 0
         elif self.x < 0:
             self.x = self.screen_width
+
+        # 更新反轉狀態
+        if self.dx > 0:
+            self.is_flipped = True  # 向右移動時保持反轉
+        elif self.dx < 0:
+            self.is_flipped = False  # 向左移動時保持不反轉
 
 # ==================== 平台類 ====================
 
