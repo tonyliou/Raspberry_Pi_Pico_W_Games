@@ -37,9 +37,37 @@ class Doodler:
         self.dx = 0.0
         self.score = 0
         self.prev_y = self.y  # 記錄上一幀的 y 位置
+    
+        self.bitmap = [
+                "0000000111100",
+                "0000001000010",
+                "0000010000001",
+                "0000100000001",
+                "1111101010001",
+                "1010000000001",
+                "1111100000001",
+                "0000111111111",
+                "0000100000001",
+                "0000100000001",
+                "0000111111111",
+                "0000010101010",
+                "0000010101010"
+            ]
 
     def show(self, oled):
-        oled.display.fill_rect(int(self.x - self.w//2), int(self.y - self.h//2), self.w, self.h, 1)
+        # 根據 dx 來決定是否反轉顯示
+        is_flipped = self.dx > 0
+
+        for row_idx, row in enumerate(self.bitmap):
+            for col_idx in range(len(row)):
+                # 根據是否反轉，選擇正序或反序顯示
+                if is_flipped:
+                    pixel = row[-(col_idx + 1)]  # 反轉顯示
+                else:
+                    pixel = row[col_idx]
+
+                if pixel == '1':
+                    oled.display.pixel(int(self.x - self.w//2 + col_idx), int(self.y - self.h//2 + row_idx), 1)
 
     def lands(self, platform):
         if self.dy > 0:
