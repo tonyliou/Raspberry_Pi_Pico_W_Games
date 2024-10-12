@@ -24,7 +24,7 @@ class OLED:
 # ==================== Bird 類 ====================
 
 class Bird:
-    GRAVITY = 0.5
+    GRAVITY = 1
     JUMP_STRENGTH = -6
 
     def __init__(self, x, y):
@@ -92,7 +92,7 @@ class Pipe:
 class Game:
     SCREEN_WIDTH = 128
     SCREEN_HEIGHT = 128
-    PIPE_GAP_HEIGHT = 30
+    PIPE_GAP_HEIGHT = 50
     PIPE_SPACING = 60
     PIPE_SPEED = 2
 
