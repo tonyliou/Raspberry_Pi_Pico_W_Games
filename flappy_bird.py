@@ -107,6 +107,8 @@ class Game:
         self.update_timer = TimeToDo.TimeToDo(63)  # 遊戲更新頻率約 63 FPS
         self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(10)  # 傾斜讀取頻率 10 Hz
         self.is_running = True
+        self.prev_accel = (0, 0, 0)  # 用於存儲上一個加速度值
+        self.shake_threshold = 0.5  # 設置搖晃檢測的閾值
 
     def init_game(self):
         """初始化遊戲變數"""
@@ -146,12 +148,25 @@ class Game:
             self.is_running = False
 
     def update_control(self):
-        """根據 MPU6050 傾斜控制鳥的跳躍"""
-        self.mpu.update_mahony()
-        _, pitch, _ = self.mpu.get_angles()
-        # 根據 pitch 角度判斷是否跳躍
-        if pitch > 10:
+        """根據 MPU6050 加速度數據檢測搖晃"""
+        # 讀取加速度數據
+        accel = self.mpu.read_accel()
+        ax, ay, az = accel
+
+        # 計算加速度的變化量
+        delta_ax = ax - self.prev_accel[0]
+        delta_ay = ay - self.prev_accel[1]
+        delta_az = az - self.prev_accel[2]
+
+        # 計算加速度變化的絕對值總和
+        delta_a_total = abs(delta_ax) + abs(delta_ay) + abs(delta_az)
+
+        # 檢測是否超過搖晃閾值
+        if delta_a_total > self.shake_threshold:
             self.bird.jump()
+
+        # 更新上一個加速度值
+        self.prev_accel = accel
 
     def update_game(self):
         """更新遊戲狀態"""
