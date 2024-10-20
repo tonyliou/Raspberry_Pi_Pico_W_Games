@@ -137,7 +137,7 @@ class Game:
             Platform(43, 77, self.SCREEN_WIDTH, self.SCREEN_HEIGHT),
             Platform(96, 102, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         ]
-        self.update_timer = TimeToDo.TimeToDo(63)  # 遊戲更新頻率 40 FPS
+        self.update_timer = TimeToDo.TimeToDo(67)  # 畫面更新頻率，大約15FPS
         self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(10)  # 傾斜讀取頻率 10 Hz
         self.is_running = True
         self.game_over = False

@@ -104,7 +104,7 @@ class Game:
         self.score = 0
         self.best_score = 0
         self.game_over = False
-        self.update_timer = TimeToDo.TimeToDo(63)  # 遊戲更新頻率約 63 FPS
+        self.update_timer = TimeToDo.TimeToDo(67)  # 畫面更新頻率，大約15FPS
         self.OnTiltAnglesTimeTo = TimeToDo.TimeToDo(10)  # 傾斜讀取頻率 10 Hz
         self.is_running = True
         self.prev_accel = (0, 0, 0)  # 用於存儲上一個加速度值
